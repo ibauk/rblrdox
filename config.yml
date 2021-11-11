@@ -1,0 +1,10 @@
+rideHdgDate:  12th & 12th June 2022
+emergencyPhone: 07908 278797
+databaseFormat: sm
+databasePath: scoremaster.db
+docs2print:
+  - certificates
+  - disclaimers
+  - receiptlogs
+
+sequence: lastname, firstname
