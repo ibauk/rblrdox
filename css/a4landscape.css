@@ -1,0 +1,95 @@
+/*
+ * css for Jodit edited and free-form certificates
+ *
+ * 2020-01-01
+ *
+ *
+ * A4 is 210 x 297
+ * Less standard .5in margins = 185 x 272
+ *
+ * These settings produce usable results on Chrome, FireFox, Safari and Edge 
+ * Improve them if you must but beware.
+ */
+
+ @page {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+ .certframe {
+	clear: both;
+	width: 272mm;
+	height: 185mm;
+	display: flex;
+	flex-direction: column;
+	align-items: left;
+	justify-content: center;
+	padding: 0;
+	margin: 0 auto 0 auto;
+	background-color: white;
+	color: black;
+	page-break-after: always;
+	position: relative;
+	top: 10mm;
+}
+
+.certificate, .jodit_wysiwyg	{
+
+	font-family: "Times New Roman", Helvetica, Verdana, Arial, sans-serif, Times;
+	width: 164mm;
+	height: 253mm;
+    padding: 7mm 14mm 7mm 14mm !important;
+	margin: auto;
+	border: var(--border-style, 2mm double);
+	overflow: hidden;
+}
+
+p {
+	margin: 0 0 10px 0; /* Match settings for jodit */
+}
+
+/* RBLR certificates */
+.header
+{
+	text-align: center;
+	padding-bottom:1cm;
+}
+.header img 
+{
+	width:90%;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.header p 
+{
+	font-style: italic;
+}
+
+.citation
+{
+	text-align: justify;
+	font-size:14pt;
+}
+
+.strict
+{
+	font-style: italic;
+	text-align:justify;
+	font-size:13pt;
+}
+
+.signature
+{
+	margin-top:3cm;
+	width:7cm;
+	border-top:solid;
+}
+
+/* End of RBLR */
+
+
+@media print {
+	@page {size: A4 landscape; margin:0;}
+	html, body {height: 100%;}
+}
