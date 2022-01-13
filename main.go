@@ -14,8 +14,8 @@ import (
 )
 
 var doc = flag.String("doc", "rlogs", "The name of the document to be produced")
-var class = flag.Int("class", -1, "The class number to be selected. Default=all")
-var entrant = flag.Int("entrant", -1, "The entrant number to be selected. Default=all")
+var class = flag.String("class", "", "The class numbers to be selected. Default=all")
+var entrant = flag.String("entrant", "", "The entrant numbers to be selected. Default=all")
 var outputfile = flag.String("to", "output.html", "Output filename")
 
 type Entrant struct {
@@ -37,8 +37,20 @@ type Entrant struct {
 	NokPhone     string
 	RiderLast    string
 	HasPillion   bool
+	IsBlank      bool
 }
 
+func newEntrant() *Entrant {
+
+	var e Entrant
+
+	e.HasPillion = true
+	e.IsBlank = true
+	e.RiderName = "RIDER"
+	e.PillionName = "PILLION"
+	return &e
+
+}
 func fileExists(x string) bool {
 
 	_, err := os.Stat(x)
@@ -48,7 +60,7 @@ func fileExists(x string) bool {
 
 func main() {
 
-	fmt.Println("RBLRDOX v0.1")
+	fmt.Println("RBLRDOX v0.2")
 	flag.Parse()
 	fmt.Printf("Generating %v\n", *doc)
 	F, _ := os.Create(*outputfile)
@@ -65,23 +77,24 @@ func main() {
 	sql += ",OdoKms,Class,Phone,Email,NokName,NokRelation,NokPhone "
 	sql += ",substr(RiderName,RiderPos+1) As RiderLast"
 	sql += " FROM (SELECT *,instr(RiderName,' ') As RiderPos FROM entrants) "
-	if *class >= 0 || *entrant >= 0 {
+	if *class != "" || *entrant != "" {
 		sql += " WHERE "
-		if *class >= 0 {
-			sql += "Class=" + strconv.Itoa(*class)
-			if *entrant >= 0 {
+		if *class != "" {
+			sql += "Class In (" + *class + ")"
+			if *entrant != "" {
 				sql += " OR " // Yes, or not and
 			}
 		}
-		if *entrant >= 0 {
-			sql += "EntrantID=" + strconv.Itoa(*entrant)
+		if *entrant != "" {
+			sql += "EntrantID In (" + *entrant + ")"
 		}
 	}
 	sql += " ORDER BY RiderLast, RiderName" // Surname
 	//fmt.Printf("%v\n", sql)
 	rows, _ := DBH.Query(sql)
 	for rows.Next() {
-		var e Entrant
+		e := newEntrant()
+		e.IsBlank = false
 		err := rows.Scan(&e.EntrantID, &e.Bike, &e.BikeReg, &e.RiderName, &e.RiderFirst, &e.RiderIBA,
 			&e.PillionName, &e.PillionFirst, &e.PillionIBA,
 			&e.OdoKms, &e.Class, &e.Phone, &e.Email, &e.NokName, &e.NokRelation, &e.NokPhone, &e.RiderLast)
