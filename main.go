@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var doc = flag.String("doc", "rlogs", "The name of the document to be produced")
@@ -23,6 +24,11 @@ var outputfile = flag.String("to", "output.html", "Output filename")
 
 var DBH *sql.DB
 var OUTF *os.File
+
+var CFG struct {
+	EventDate string `yaml:"eventDate"`
+	Database  string `yaml:"database"`
+}
 
 type Entrant struct {
 	EntrantID    int
@@ -44,6 +50,7 @@ type Entrant struct {
 	RiderLast    string
 	HasPillion   bool
 	IsBlank      bool
+	EventDate    string
 }
 
 func newEntrant() *Entrant {
@@ -54,6 +61,7 @@ func newEntrant() *Entrant {
 	e.IsBlank = true
 	e.RiderName = "RIDER"
 	e.PillionName = "PILLION"
+	e.EventDate = CFG.EventDate
 	return &e
 
 }
@@ -64,15 +72,38 @@ func fileExists(x string) bool {
 
 }
 
+func loadConfig() {
+
+	configPath := "rblrdox.yml"
+
+	if !fileExists(configPath) {
+		fmt.Printf("Can't find config file %v\n", configPath)
+		return
+	}
+
+	file, err := os.Open(configPath)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	D := yaml.NewDecoder(file)
+	err = D.Decode(&CFG)
+	if err != nil {
+		panic(err)
+	}
+
+}
 func main() {
 
-	fmt.Println("RBLRDOX v0.3")
+	fmt.Printf("RBLRDOX v1.0\nCopyright (c) 2022 Bob Stammers\n")
 	flag.Parse()
-	fmt.Printf("Generating %v\n", *doc)
+	loadConfig()
+	fmt.Printf("Event date: %v\nGenerating %v into %v\n", CFG.EventDate, *doc, *outputfile)
 	OUTF, _ = os.Create(*outputfile)
 	defer OUTF.Close()
 	var err error
-	DBH, err = sql.Open("sqlite3", "scoremaster.db")
+	DBH, err = sql.Open("sqlite3", CFG.Database)
 	if err != nil {
 		panic(err)
 	}
@@ -103,6 +134,7 @@ func main() {
 	sql += " ORDER BY RiderLast, RiderName" // Surname
 	//fmt.Printf("%v\n", sql)
 	rows, _ := DBH.Query(sql)
+	NRex := 0
 	for rows.Next() {
 		e := newEntrant()
 		e.IsBlank = false
@@ -131,8 +163,9 @@ func main() {
 		if err != nil {
 			fmt.Printf("x %v\n", err)
 		}
-
+		NRex++
 	}
+	fmt.Printf("%v populated forms generated\n", NRex)
 	if *blanks > 0 {
 		printBlanks()
 	}
@@ -152,6 +185,7 @@ func emitTopTail(F *os.File, xfile string) {
 func printBlanks() {
 
 	classes := strings.Split(*class, ",")
+	NREX := 0
 	for _, c := range classes {
 		for n := 0; n < *blanks; n++ {
 			e := newEntrant()
@@ -170,7 +204,8 @@ func printBlanks() {
 			if err != nil {
 				fmt.Printf("x %v\n", err)
 			}
-
+			NREX++
 		}
 	}
+	fmt.Printf("%v blank forms generated\n", NREX)
 }
