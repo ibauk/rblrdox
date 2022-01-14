@@ -3,7 +3,7 @@
     <h4>Emergency contact number: <strong>07908 278797</strong></h4>
     <table class="rlblock1">
         <tr>
-            <td> Rider name: <strong> {{.RiderName}}</strong></td>
+            <td> Rider name: <strong> {{if .IsBlank}}{{else}}{{.RiderName}}{{end}}</strong></td>
             <td> Bike reg number: <strong>{{.BikeReg}}</strong></td>
         </tr>
     </table>

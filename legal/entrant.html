@@ -1,7 +1,8 @@
 <div class="certframe">
 <h1>RBLR1000 DISCLAIMER - 11th / 12th JUNE 2022</h1>
-<p>Rider name: <strong>{{.RiderName}}</strong> 
-    {{if .HasPillion}} &nbsp;&nbsp;&nbsp;&nbsp;Pillion name: <strong>{{.PillionName}}</strong>{{end}}</p>
+<p>Rider name: <strong>{{if .IsBlank}}____________________{{else}}{{.RiderName}}{{end}}</strong> 
+    {{if .HasPillion}} &nbsp;&nbsp;&nbsp;&nbsp;Pillion name: 
+    <strong>{{if .IsBlank}}____________________{{else}}{{.PillionName}}{{end}}</strong>{{end}}</p>
 <h6>Entry Declaration:</h6>
     <ul>
         <li>{{if .HasPillion}}We{{else}}I{{end}} hereby declare that {{if .HasPillion}}we{{else}}I{{end}}  have had

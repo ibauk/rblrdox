@@ -9,14 +9,20 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var doc = flag.String("doc", "rlogs", "The name of the document to be produced")
+var solo = flag.Bool("solo", false, "Blank forms, rider only")
 var class = flag.String("class", "", "The class numbers to be selected. Default=all")
+var blanks = flag.Int("blanks", 0, "Print <n> blanks only")
 var entrant = flag.String("entrant", "", "The entrant numbers to be selected. Default=all")
 var outputfile = flag.String("to", "output.html", "Output filename")
+
+var DBH *sql.DB
+var OUTF *os.File
 
 type Entrant struct {
 	EntrantID    int
@@ -60,33 +66,38 @@ func fileExists(x string) bool {
 
 func main() {
 
-	fmt.Println("RBLRDOX v0.2")
+	fmt.Println("RBLRDOX v0.3")
 	flag.Parse()
 	fmt.Printf("Generating %v\n", *doc)
-	F, _ := os.Create(*outputfile)
-	defer F.Close()
-	DBH, err := sql.Open("sqlite3", "scoremaster.db")
+	OUTF, _ = os.Create(*outputfile)
+	defer OUTF.Close()
+	var err error
+	DBH, err = sql.Open("sqlite3", "scoremaster.db")
 	if err != nil {
 		panic(err)
 	}
 	defer DBH.Close()
 
 	xfile := filepath.Join(*doc, "header.html")
-	emitTopTail(F, xfile)
+	emitTopTail(OUTF, xfile)
 	sql := "SELECT EntrantID,Bike,BikeReg,RiderName,RiderFirst,RiderIBA,PillionName,PillionFirst,PillionIBA"
 	sql += ",OdoKms,Class,Phone,Email,NokName,NokRelation,NokPhone "
 	sql += ",substr(RiderName,RiderPos+1) As RiderLast"
 	sql += " FROM (SELECT *,instr(RiderName,' ') As RiderPos FROM entrants) "
-	if *class != "" || *entrant != "" {
+	if *class != "" || *entrant != "" || *blanks > 0 {
 		sql += " WHERE "
-		if *class != "" {
-			sql += "Class In (" + *class + ")"
-			if *entrant != "" {
-				sql += " OR " // Yes, or not and
+		if *blanks > 0 {
+			sql += "EntrantID < 0 AND Class < 0" // So none will be found
+		} else {
+			if *class != "" {
+				sql += "Class In (" + *class + ")"
+				if *entrant != "" {
+					sql += " OR " // Yes, or not and
+				}
 			}
-		}
-		if *entrant != "" {
-			sql += "EntrantID In (" + *entrant + ")"
+			if *entrant != "" {
+				sql += "EntrantID In (" + *entrant + ")"
+			}
 		}
 	}
 	sql += " ORDER BY RiderLast, RiderName" // Surname
@@ -116,14 +127,17 @@ func main() {
 		if err != nil {
 			fmt.Printf("new %v\n", err)
 		}
-		err = t.Execute(F, e)
+		err = t.Execute(OUTF, e)
 		if err != nil {
 			fmt.Printf("x %v\n", err)
 		}
 
 	}
+	if *blanks > 0 {
+		printBlanks()
+	}
 	xfile = filepath.Join(*doc, "footer.html")
-	emitTopTail(F, xfile)
+	emitTopTail(OUTF, xfile)
 }
 
 func emitTopTail(F *os.File, xfile string) {
@@ -133,4 +147,30 @@ func emitTopTail(F *os.File, xfile string) {
 		fmt.Printf("new %v\n", err)
 	}
 	F.WriteString(string(html))
+}
+
+func printBlanks() {
+
+	classes := strings.Split(*class, ",")
+	for _, c := range classes {
+		for n := 0; n < *blanks; n++ {
+			e := newEntrant()
+			e.Class, _ = strconv.Atoi(c)
+			e.HasPillion = !*solo
+			xfile := filepath.Join(*doc, "entrant"+strconv.Itoa(e.Class)+".html")
+			if !fileExists(xfile) {
+				xfile = filepath.Join(*doc, "entrant.html")
+			}
+
+			t, err := template.ParseFiles(xfile)
+			if err != nil {
+				fmt.Printf("new %v\n", err)
+			}
+			err = t.Execute(OUTF, e)
+			if err != nil {
+				fmt.Printf("x %v\n", err)
+			}
+
+		}
+	}
 }
