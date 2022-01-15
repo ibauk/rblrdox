@@ -1,0 +1,92 @@
+<div class="certframe{{if .PageAfter}} pageafter{{end}}">
+
+    <!--
+    <div class="row">
+        <div class="column left">
+            <img src="images/rblr.png" height="100px" alt="*">
+        </div>
+        <div class="column middle">
+    -->
+            <h1> Receipt Log - North Clockwise</h1>
+            <h4>Emergency contact number: <strong>07908 278797</strong></h4>
+    <!--    
+        </div>
+        <div class="column right">
+            <img src="images/ibauk90.png" height="90px" alt="*">
+        </div>
+      </div> 
+    -->
+    
+    <table class="rlblock1">
+        <tr>
+            <td> Rider name: <strong> {{if .IsBlank}}{{else}}{{.RiderName}}{{end}}</strong></td>
+            <td> Bike reg number: <strong>{{.BikeReg}}</strong></td>
+        </tr>
+    </table>
+    <table class="rlblock2">
+        <tr>
+            <td class="top">Start time:</td>
+            <td class="top">Staff signature:</td>
+        </tr>
+        <tr>
+            <td>Odometer:</td>
+            <td class="bottom"></td>
+        </tr>
+    </table>
+    <table class="rlblock2">
+        <tr>
+            <th class="rlplace top" colspan="2">Rivington services</th>
+        </tr>
+        <tr>
+            <td class="top">Arrival time:</td>
+            <td class="top">Staff signature:</td>
+        </tr>
+        <tr>
+            <td class="bottom">&nbsp;&nbsp;</td>
+            <td class="bottom"></td>
+        </tr>
+    </table>
+
+    <table class="rlblock2">
+        <tr>
+            <td class="top">Finish time:</td>
+            <td class="top">Staff signature:</td>
+        </tr>
+        <tr>
+            <td>Odometer:</td>
+            <td class="bottom"></td>
+        </tr>
+    </table>
+    <table class="rlblock3">
+        <tr>
+            <th class="rlindex top">Receipt No.</th>
+            <th class="rlplace top">Location</th>
+            <th class="top">Remarks</th>
+        </tr>
+        <tr>
+            <td class="rlindex top">1</td>
+            <td class="rlplace top">Rivington services</td>
+            <td class="top">If no team there or you need fuel</td>
+        </tr>
+        <tr>
+            <td class="rlindex top">2</td>
+            <td class="rlplace top">Fort William</td>
+            <td class="top"></td>
+        </tr>
+        <tr>
+            <td class="rlindex top">3</td>
+            <td class="rlplace top">Wick</td>
+            <td class="top"></td>
+        </tr>
+        <tr>
+            <td class="rlindex top">4</td>
+            <td class="rlplace top">Edinburgh</td>
+            <td class="top"></td>
+        </tr>
+        <tr>
+            <td class="rlindex">5</td>
+            <td class="rlplace">Berwick-Upon-Tweed</td>
+            <td></td>
+        </tr>
+    </table>
+</div>

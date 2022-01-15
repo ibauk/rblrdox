@@ -23,6 +23,7 @@ The routes (class) are:- A-NC [2], B-NAC [1], C-SC [4], D-SAC [3], E-5C [6], F-5
 >24hr certs use class = A-NAC [8], B-NC [9], C-SAC [10], D-SC [11].
 `
 
+var a5 = flag.Bool("2", false, "Print two per page")
 var doc = flag.String("doc", "rlogs", "The name of the document to be produced")
 var solo = flag.Bool("solo", false, "Blank forms, rider only")
 var class = flag.String("class", "", "The class numbers to be selected. Default=all")
@@ -60,6 +61,7 @@ type Entrant struct {
 	HasPillion   bool
 	IsBlank      bool
 	EventDate    string
+	PageAfter    bool
 }
 
 func newEntrant() *Entrant {
@@ -71,6 +73,7 @@ func newEntrant() *Entrant {
 	e.RiderName = "RIDER"
 	e.PillionName = "PILLION"
 	e.EventDate = CFG.EventDate
+	e.PageAfter = true
 	return &e
 
 }
@@ -169,7 +172,9 @@ func main() {
 		}
 
 		e.HasPillion = e.PillionName != ""
-
+		if *a5 {
+			e.PageAfter = NRex%2 != 0
+		}
 		xfile = filepath.Join(*doc, "entrant"+strconv.Itoa(e.Class)+".html")
 		if !fileExists(xfile) {
 			xfile = filepath.Join(*doc, "entrant.html")
@@ -208,12 +213,15 @@ func emitTopTail(F *os.File, xfile string) {
 func printBlanks() {
 
 	classes := strings.Split(*class, ",")
-	NREX := 0
+	NRex := 0
 	for _, c := range classes {
 		for n := 0; n < *blanks; n++ {
 			e := newEntrant()
 			e.Class, _ = strconv.Atoi(c)
 			e.HasPillion = !*solo
+			if *a5 {
+				e.PageAfter = NRex%2 != 0
+			}
 			xfile := filepath.Join(*doc, "entrant"+strconv.Itoa(e.Class)+".html")
 			if !fileExists(xfile) {
 				xfile = filepath.Join(*doc, "entrant.html")
@@ -227,8 +235,8 @@ func printBlanks() {
 			if err != nil {
 				fmt.Printf("x %v\n", err)
 			}
-			NREX++
+			NRex++
 		}
 	}
-	fmt.Printf("%v blank forms generated\n", NREX)
+	fmt.Printf("%v blank forms generated\n", NRex)
 }
