@@ -15,11 +15,20 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+const apptitle = "RBLRDOX v1.0"
+const progdesc = `
+I print disclaimers (-doc legal), receipt logs (-doc rlogs) and ride certificates (-doc certs)
+for the RBLR1000 event using entrant details held in a ScoreMaster database.
+The routes (class) are:- A-NC [2], B-NAC [1], C-SC [4], D-SAC [3], E-5C [6], F-5AC [7].
+>24hr certs use class = A-NAC [8], B-NC [9], C-SAC [10], D-SC [11].
+`
+
 var doc = flag.String("doc", "rlogs", "The name of the document to be produced")
 var solo = flag.Bool("solo", false, "Blank forms, rider only")
 var class = flag.String("class", "", "The class numbers to be selected. Default=all")
 var blanks = flag.Int("blanks", 0, "Print <n> blanks only")
 var entrant = flag.String("entrant", "", "The entrant numbers to be selected. Default=all")
+var showusage = flag.Bool("?", false, "Show this help")
 var outputfile = flag.String("to", "output.html", "Output filename")
 
 var DBH *sql.DB
@@ -72,6 +81,22 @@ func fileExists(x string) bool {
 
 }
 
+func init() {
+
+	flag.Usage = func() {
+		w := flag.CommandLine.Output()
+		fmt.Fprintf(w, "%v\n", apptitle)
+		fmt.Fprintf(w, "%v\n", progdesc)
+		flag.PrintDefaults()
+	}
+	flag.Parse()
+	if *showusage {
+		flag.Usage()
+		os.Exit(1)
+	}
+	loadConfig()
+}
+
 func loadConfig() {
 
 	configPath := "rblrdox.yml"
@@ -96,9 +121,7 @@ func loadConfig() {
 }
 func main() {
 
-	fmt.Printf("RBLRDOX v1.0\nCopyright (c) 2022 Bob Stammers\n")
-	flag.Parse()
-	loadConfig()
+	fmt.Printf("%v\nCopyright (c) 2022 Bob Stammers\n", apptitle)
 	fmt.Printf("Event date: %v\nGenerating %v into %v\n", CFG.EventDate, *doc, *outputfile)
 	OUTF, _ = os.Create(*outputfile)
 	defer OUTF.Close()
