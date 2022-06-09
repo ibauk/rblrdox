@@ -1,8 +1,11 @@
 <div class="certframe">
 <h1>RBLR1000 DISCLAIMER - {{.EventDate}}</h1>
 <p>Rider name: <strong>{{if .IsBlank}}____________________{{else}}{{.RiderName}}{{end}}</strong> 
-    {{if .HasPillion}} &nbsp;&nbsp;&nbsp;&nbsp;Pillion name: 
-    <strong>{{if .IsBlank}}____________________{{else}}{{.PillionName}}{{end}}</strong>{{end}}</p>
+    &nbsp;&nbsp;&nbsp;
+    <strong>{{if .IsBlank}}__________________
+        <span class="prefill">Mobile &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.</span>{{else}}{{.Phone}}{{end}}</strong>
+        {{if .HasPillion}} &nbsp;&nbsp;&nbsp;&nbsp;Pillion name: 
+    <strong>{{if .IsBlank}}__________________{{else}}{{.PillionName}}{{end}}</strong>{{end}}</p>
 <h6>Entry Declaration:</h6>
     <ul>
         <li>{{if .HasPillion}}We{{else}}I{{end}} hereby declare that {{if .HasPillion}}we{{else}}I{{end}}  have had
@@ -40,4 +43,7 @@
         <td class="tall box"></td><td class="tall{{if .HasPillion}} box{{end}}">&nbsp;</td>
     </tr>
 </table>
+<p>Emergency contact: <strong>{{if .IsBlank}}____________________{{else}}{{.NokName}}{{end}}</strong> 
+     ({{if .IsBlank}}_____________________<span class="prefill">Relation &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.</span>{{else}}{{.NokRelation}}{{end}}) 
+     {{if .IsBlank}}Phone: _______________________{{else}}<strong>{{.NokPhone}}</strong>{{end}}</p>
 </div>
