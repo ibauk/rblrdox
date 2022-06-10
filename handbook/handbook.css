@@ -1,0 +1,57 @@
+/*
+ * handbook.css
+ *
+ * Styling for RBLR1000 handbook
+ *
+ */
+
+ body           { 
+    font-family: Arial, Verdana, Geneva, Tahoma, sans-serif;
+}
+
+section         {
+    width: 200mm;
+}
+
+h1              {
+    text-align: center;
+}
+
+h2              {
+    text-align: justify;
+    background-color: yellow;
+    font-weight: bold;
+}
+
+h3              {
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+p               {
+    text-align: justify;
+}
+
+#routelist      {
+
+    width: 150mm;
+    margin-left: auto;
+    margin-right: auto;
+
+}
+
+#routelist td   {
+    padding-bottom: 1em;
+}
+
+.routelog       {
+
+    width: 200mm;
+
+}
+
+.routelog.order {
+    width: 5em;
+    font-weight: bold;
+    text-align: center;
+}
