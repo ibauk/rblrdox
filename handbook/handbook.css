@@ -7,25 +7,47 @@
 
  body           { 
     font-family: Arial, Verdana, Geneva, Tahoma, sans-serif;
+    counter-reset: page 1;
 }
 
 section         {
-    width: 200mm;
+    display: block;
+    clear: both;
+    width: 185mm;
+    height: 282mm;
+    margin-left: auto;
+    margin-right: auto;
 }
 
+.fpleft         {
+    width: 200px;
+    margin-top: 2em;
+    float: left;
+}
+.fpright        {
+    width: 300px;
+    margin-top: 5em;
+    float: right;
+}
+.newpage        {
+    page-break-before: always;
+    padding-top: 2em;
+}
 h1              {
     text-align: center;
 }
 
-h2              {
+.hilite              {
     text-align: justify;
     background-color: yellow;
     font-weight: bold;
+
 }
 
 h3              {
     text-decoration: underline;
     font-weight: bold;
+    margin-bottom: 0;
 }
 
 p               {
@@ -46,12 +68,74 @@ p               {
 
 .routelog       {
 
-    width: 200mm;
+    width: 185mm;
+    border-spacing: 0;
 
 }
 
-.routelog.order {
+.routelog caption   {
+    font-size: xx-large;
+    font-weight: bold;
+}
+.routelog th    {
+    border-top: solid 1px;
+    border-bottom: solid 1px;
+    border-right: solid 1px;
+    padding: 2px 5px;
+}
+.routelog td    {
+    border-right: solid 1px;
+    border-bottom: solid 1px;
+    padding: 2px 5px;
+}
+
+
+.routelog .order {
     width: 5em;
+    border-left: solid 1px;
     font-weight: bold;
     text-align: center;
+}
+
+.routelog .name     {
+    width: 12em;
+}
+.routelog .coords {
+    width: 7em;
+}
+
+.route       {
+    display: 
+    block;
+    margin-left: auto;
+    margin-right: auto;
+    height: 550px;
+    width: 185mm;
+}
+
+.rightside {
+    float: right;
+}
+
+@media print {
+	@page {
+        size: A4 portrait; 
+        margin-top: 0;
+        margin-left: 2em;
+        margin-right: 2em;
+        margin-bottom: 0;
+    }
+	html, body {height: 100%;  }
+    footer {
+        display: block;
+        bottom: 0; 
+        padding-bottom: 0em;
+        border-top: solid 1px;
+    }
+    .newpage {
+        counter-increment: page;
+    }
+    .rightsidex::before {
+        content: "Page " counter(page) " of " counter(pages);
+    }
 }
