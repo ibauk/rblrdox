@@ -1,0 +1,49 @@
+<div class="certframe">
+<h1>The Brit Butt DISCLAIMER - {{.EventDate}}</h1>
+<p>Rider name: <strong>{{if .IsBlank}}____________________{{else}}{{.RiderName}}{{end}}</strong> 
+    &nbsp;&nbsp;&nbsp;
+    <strong>{{if .IsBlank}}__________________
+        <span class="prefill">Mobile &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.</span>{{else}}{{.Phone}}{{end}}</strong>
+        {{if .HasPillion}} &nbsp;&nbsp;&nbsp;&nbsp;Pillion name: 
+    <strong>{{if .IsBlank}}__________________{{else}}{{.PillionName}}{{end}}</strong>{{end}}</p>
+<h6>Entry Declaration:</h6>
+    <ul>
+        <li>{{if .HasPillion}}We{{else}}I{{end}} hereby declare that {{if .HasPillion}}we{{else}}I{{end}}  have had
+            the opportunity to read and understand the instructions for the rally and have paid particular attention 
+            to the IBA Archive of Wisdom and agree to be bound by them.
+        </li>
+        <li>{{if .HasPillion}}We{{else}}I{{end}} further declare that {{if .HasPillion}}we are{{else}}I am{{end}}
+            physically fit to take part in the event and competent to do so.
+        </li>
+        <li>{{if .HasPillion}}We{{else}}I{{end}} understand the nature and type of event 
+            {{if .HasPillion}}we are{{else}}I am{{end}} entering and its inherent risks and agree to accept the same.
+        </li>
+        <li>{{if .HasPillion}}We{{else}}I{{end}} confirm that the vehicle which {{if .HasPillion}}we{{else}}I{{end}}
+            ride shall be suitable, roadworthy and proper for the purpose.
+        </li>
+        <li>{{if .HasPillion}}We{{else}}I{{end}} confirm that as the event takes place on a public highway, 
+            the vehicle is insured as required by the Road Traffic Acts, or equivalent legislation
+            and that it will comply with the regulations in respect thereof.
+        </li>
+    </ul>
+
+<h6>Acknowledgment of the risks of motorcycling:</h6>
+<p>{{if .HasPillion}}We{{else}}I{{end}} understand that by taking part in this event {{if .HasPillion}}we are{{else}}I am{{end}}
+    exposed to a risk of death, becoming permanently disabled or suffering other serious injuries. 
+    {{if .HasPillion}}We{{else}}I{{end}} have read the above and acknowledge that {{if .HasPillion}}our{{else}}my{{end}}
+    participation in this event is entirely at {{if .HasPillion}}our{{else}}my{{end}} own risk and do not hold any of the
+    organisers or IBA UK liable.  
+</p>
+<table class="signboxes">
+    <tr>
+        <td class="vlabel"></td><td class="label">{{.RiderName}}</td>
+        <td class="label">{{if .HasPillion}}{{.PillionName}}{{else}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{end}}</td></tr>
+    <tr>
+        <td class="vlabel tall">Signature{{if .HasPillion}}s{{end}}</td>
+        <td class="tall box"></td><td class="tall{{if .HasPillion}} box{{end}}">&nbsp;</td>
+    </tr>
+</table>
+<p>Emergency contact: <strong>{{if .IsBlank}}____________________{{else}}{{.NokName}}{{end}}</strong> 
+     ({{if .IsBlank}}_____________________<span class="prefill">Relation &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.</span>{{else}}{{.NokRelation}}{{end}}) 
+     {{if .IsBlank}}Phone: _______________________{{else}}<strong>{{.NokPhone}}</strong>{{end}}</p>
+</div>

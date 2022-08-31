@@ -1,0 +1,20 @@
+<table style="border-spacing:1em;">
+    <tr>
+        <td class="EntrantID">
+            {{if .IsBlank}}____{{else}}{{.EntrantID}}{{end}}
+        </td>
+        <td class="RiderName">
+            {{if .IsBlank}}____________________{{else}}{{.RiderName}}{{end}}
+        </td>
+        <td class="StartOdo">
+            start
+        </td>
+        <td class="FinishOdo">
+            finish
+        </td>
+        <td class="trip">
+            34.2
+        </td>
+        <td class="mk">{{if .OdoKms}}K{{else}}M{{end}}</td>
+    </tr>
+</table>

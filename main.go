@@ -137,8 +137,9 @@ func main() {
 
 	xfile := filepath.Join(*doc, "header.html")
 	emitTopTail(OUTF, xfile)
-	sql := "SELECT EntrantID,Bike,BikeReg,RiderName,RiderFirst,RiderIBA,PillionName,PillionFirst,PillionIBA"
-	sql += ",OdoKms,Class,Phone,Email,NokName,NokRelation,NokPhone "
+	sql := "SELECT EntrantID,ifnull(Bike,''),ifnull(BikeReg,''),ifnull(RiderName,'') as RiderName,ifnull(RiderFirst,'')"
+	sql += ",ifnull(RiderIBA,0),ifnull(PillionName,''),ifnull(PillionFirst,''),ifnull(PillionIBA,0)"
+	sql += ",OdoKms,Class,ifnull(Phone,''),ifnull(Email,''),ifnull(NokName,''),ifnull(NokRelation,''),ifnull(NokPhone,'') "
 	sql += ",substr(RiderName,RiderPos+1) As RiderLast"
 	sql += " FROM (SELECT *,instr(RiderName,' ') As RiderPos FROM entrants) "
 	if *class != "" || *entrant != "" || *blanks > 0 {
@@ -158,7 +159,7 @@ func main() {
 		}
 	}
 	sql += " ORDER BY RiderLast, RiderName" // Surname
-	//fmt.Printf("%v\n", sql)
+	fmt.Printf("%v\n", sql)
 	rows, _ := DBH.Query(sql)
 	NRex := 0
 	for rows.Next() {

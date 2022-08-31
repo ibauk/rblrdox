@@ -7,7 +7,6 @@
 
  body           { 
     font-family: Arial, Verdana, Geneva, Tahoma, sans-serif;
-    counter-reset: page 1;
 }
 
 section         {
@@ -35,6 +34,7 @@ section         {
 }
 h1              {
     text-align: center;
+    clear: both;
 }
 
 .hilite              {
@@ -104,13 +104,23 @@ p               {
     width: 7em;
 }
 
-.route       {
+.routemap    {
     display: 
     block;
     margin-left: auto;
     margin-right: auto;
     height: 550px;
     width: 185mm;
+}
+
+footer {
+    display: block;
+    bottom: 0; 
+    padding-bottom: 0em;
+    border-top: solid 1px;
+    width: 185mm;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .rightside {
@@ -126,16 +136,4 @@ p               {
         margin-bottom: 0;
     }
 	html, body {height: 100%;  }
-    footer {
-        display: block;
-        bottom: 0; 
-        padding-bottom: 0em;
-        border-top: solid 1px;
-    }
-    .newpage {
-        counter-increment: page;
-    }
-    .rightsidex::before {
-        content: "Page " counter(page) " of " counter(pages);
-    }
 }
