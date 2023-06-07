@@ -10,12 +10,12 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
-	yaml "gopkg.in/yaml.v2"
 )
 
-const apptitle = "RBLRDOX v1.0"
+const apptitle = "RBLRDOX v1.1"
 const progdesc = `
 I print disclaimers (-doc legal), receipt logs (-doc rlogs) and ride certificates (-doc certs)
 for the RBLR1000 event using entrant details held in a ScoreMaster database.
@@ -23,12 +23,15 @@ The routes (class) are:- A-NC [2], B-NAC [1], C-SC [4], D-SAC [3], E-5C [6], F-5
 >24hr certs use class = A-NAC [8], B-NC [9], C-SAC [10], D-SC [11].
 `
 
-var a5 = flag.Bool("2", false, "Print two per page")
+var db = flag.String("db", `\sm-installs\rblr23\sm\ScoreMaster.db`, "use this database")
+
+var a5 = flag.Bool("a5", false, "Print two per A4 portrait page")
 var doc = flag.String("doc", "rlogs", "The name of the document to be produced")
 var solo = flag.Bool("solo", false, "Blank forms, rider only")
 var class = flag.String("class", "", "The class numbers to be selected. Default=all")
 var blanks = flag.Int("blanks", 0, "Print <n> blanks only")
 var entrant = flag.String("entrant", "", "The entrant numbers to be selected. Default=all")
+var rambling = flag.Bool("v", false, "Show debug info")
 var showusage = flag.Bool("?", false, "Show this help")
 var outputfile = flag.String("to", "output.html", "Output filename")
 
@@ -36,12 +39,15 @@ var DBH *sql.DB
 var OUTF *os.File
 
 var CFG struct {
-	EventDate string `yaml:"eventDate"`
-	Database  string `yaml:"database"`
+	EventDate  string
+	EventTitle string
+	Database   string
+	A5         bool
 }
 
 type Entrant struct {
 	EntrantID    int
+	ABike        string
 	Bike         string
 	BikeReg      string
 	RiderName    string
@@ -61,6 +67,7 @@ type Entrant struct {
 	HasPillion   bool
 	IsBlank      bool
 	EventDate    string
+	EventTitle   string
 	PageAfter    bool
 }
 
@@ -73,6 +80,7 @@ func newEntrant() *Entrant {
 	e.RiderName = "RIDER"
 	e.PillionName = "PILLION"
 	e.EventDate = CFG.EventDate
+	e.EventTitle = CFG.EventTitle
 	e.PageAfter = true
 	return &e
 
@@ -97,35 +105,53 @@ func init() {
 		flag.Usage()
 		os.Exit(1)
 	}
-	loadConfig()
-}
-
-func loadConfig() {
-
-	configPath := "rblrdox.yml"
-
-	if !fileExists(configPath) {
-		fmt.Printf("Can't find config file %v\n", configPath)
-		return
-	}
-
-	file, err := os.Open(configPath)
-	if err != nil {
-		return
-	}
-	defer file.Close()
-
-	D := yaml.NewDecoder(file)
-	err = D.Decode(&CFG)
-	if err != nil {
-		panic(err)
-	}
+	CFG.Database = *db
+	CFG.A5 = *a5
 
 }
+
+// Crude English-only a/an prefix
+func formattedABike(bike string) string {
+
+	res := "a"
+	switch bike[0:1] {
+	case "A", "E", "I", "O":
+		res = "an"
+	}
+	//fmt.Printf("%v == %v\n", bike, res)
+	return res + " " + bike
+}
+
+func formattedDate(dt time.Time) string {
+
+	return dt.Format("2 January 2006")
+
+}
+
+// daterange must be iso8601;iso8601
+func formattedDateRange(daterange string) string {
+	if daterange == "" {
+		return ""
+	}
+	dts := strings.Split(daterange, ";")
+	dt := strings.Split(dts[0], "T")
+	dt1, _ := time.Parse("2006-01-02", dt[0])
+	dt = strings.Split(dts[1], "T")
+	dt2, _ := time.Parse("2006-01-02", dt[0])
+	if dt1 == dt2 {
+		return formattedDate(dt1)
+	}
+	if dt1.Year() == dt2.Year() && dt1.Month() == dt2.Month() {
+		return dt1.Format("2") + "/" + formattedDate(dt2)
+	}
+	return formattedDate(dt1) + " - " + formattedDate(dt2)
+
+}
+
 func main() {
 
-	fmt.Printf("%v\nCopyright (c) 2022 Bob Stammers\n", apptitle)
-	fmt.Printf("Event date: %v\nGenerating %v into %v\n", CFG.EventDate, *doc, *outputfile)
+	fmt.Printf("%v\nCopyright (c) 2023 Bob Stammers\n", apptitle)
+	fmt.Printf("%v\n", progdesc)
 	OUTF, _ = os.Create(*outputfile)
 	defer OUTF.Close()
 	var err error
@@ -135,32 +161,55 @@ func main() {
 	}
 	defer DBH.Close()
 
+	sqlx := "SELECT rallyparams.StartTime || ';' || rallyparams.FinishTime AS DateRallyRange,RallyTitle FROM rallyparams"
+
+	rows, err := DBH.Query(sqlx)
+	if err != nil {
+		panic(err)
+	}
+	if rows.Next() {
+		var daterange string
+		rows.Scan(&daterange, &CFG.EventTitle)
+		CFG.EventDate = formattedDateRange(daterange)
+	}
+	rows.Close()
+	fmt.Printf("Using database %v  Use -db to override\n", *db)
+	fmt.Printf("Event date: %v\nGenerating %v into %v  Use -doc, -to to override\n", CFG.EventDate, *doc, *outputfile)
 	xfile := filepath.Join(*doc, "header.html")
+	if !fileExists(xfile) {
+		fmt.Println(xfile + " doesn't exist, quitting")
+		return
+	}
 	emitTopTail(OUTF, xfile)
-	sql := "SELECT EntrantID,ifnull(Bike,''),ifnull(BikeReg,''),ifnull(RiderName,'') as RiderName,ifnull(RiderFirst,'')"
-	sql += ",ifnull(RiderIBA,0),ifnull(PillionName,''),ifnull(PillionFirst,''),ifnull(PillionIBA,0)"
-	sql += ",OdoKms,Class,ifnull(Phone,''),ifnull(Email,''),ifnull(NokName,''),ifnull(NokRelation,''),ifnull(NokPhone,'') "
-	sql += ",substr(RiderName,RiderPos+1) As RiderLast"
-	sql += " FROM (SELECT *,instr(RiderName,' ') As RiderPos FROM entrants) "
+	sqlx = "SELECT EntrantID,ifnull(Bike,''),ifnull(BikeReg,''),ifnull(RiderName,'') as RiderName,ifnull(RiderFirst,'')"
+	sqlx += ",ifnull(RiderIBA,0),ifnull(PillionName,''),ifnull(PillionFirst,''),ifnull(PillionIBA,0)"
+	sqlx += ",OdoKms,Class,ifnull(Phone,''),ifnull(Email,''),ifnull(NokName,''),ifnull(NokRelation,''),ifnull(NokPhone,'') "
+	sqlx += ",substr(RiderName,RiderPos+1) As RiderLast"
+	sqlx += " FROM (SELECT *,instr(RiderName,' ') As RiderPos FROM entrants) "
 	if *class != "" || *entrant != "" || *blanks > 0 {
-		sql += " WHERE "
+		sqlx += " WHERE "
 		if *blanks > 0 {
-			sql += "EntrantID < 0 AND Class < 0" // So none will be found
+			sqlx += "EntrantID < 0 AND Class < 0" // So none will be found
 		} else {
 			if *class != "" {
-				sql += "Class In (" + *class + ")"
+				sqlx += "Class In (" + *class + ")"
 				if *entrant != "" {
-					sql += " OR " // Yes, or not and
+					sqlx += " OR " // Yes, or not and
 				}
 			}
 			if *entrant != "" {
-				sql += "EntrantID In (" + *entrant + ")"
+				sqlx += "EntrantID In (" + *entrant + ")"
 			}
 		}
 	}
-	sql += " ORDER BY RiderLast, RiderName" // Surname
-	fmt.Printf("%v\n", sql)
-	rows, _ := DBH.Query(sql)
+	sqlx += " ORDER BY RiderLast, RiderName" // Surname
+	if *rambling {
+		fmt.Printf("%v\n", sqlx)
+	}
+	rows, err = DBH.Query(sqlx)
+	if err != nil {
+		panic(err)
+	}
 	NRex := 0
 	for rows.Next() {
 		e := newEntrant()
@@ -173,6 +222,7 @@ func main() {
 		}
 
 		e.HasPillion = e.PillionName != ""
+		e.ABike = formattedABike(e.Bike)
 		if *a5 {
 			e.PageAfter = NRex%2 != 0
 		}
@@ -202,13 +252,27 @@ func main() {
 	emitTopTail(OUTF, xfile)
 }
 
+func emitParsedTopTail(F *os.File, xfile string) {
+	t, err := template.ParseFiles(xfile)
+	if err != nil {
+		panic(err)
+	}
+	err = t.Execute(F, CFG)
+	if err != nil {
+		panic(err)
+	}
+}
 func emitTopTail(F *os.File, xfile string) {
 
-	html, err := os.ReadFile(xfile)
-	if err != nil {
-		fmt.Printf("new %v\n", err)
-	}
-	F.WriteString(string(html))
+	emitParsedTopTail(F, xfile)
+
+	/*
+		html, err := os.ReadFile(xfile)
+		if err != nil {
+			fmt.Printf("new %v\n", err)
+		}
+		F.WriteString(string(html))
+	*/
 }
 
 func printBlanks() {

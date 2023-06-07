@@ -1,5 +1,5 @@
-<div class="certframe">
-<h1>RBLR1000 DISCLAIMER - {{.EventDate}}</h1>
+<div class="certframe{{if .PageAfter}} pageafter{{end}}">
+<h1>{{.EventTitle}} DISCLAIMER - {{.EventDate}}</h1>
 <p>Rider name: <strong>{{if .IsBlank}}____________________{{else}}{{.RiderName}}{{end}}</strong> 
     &nbsp;&nbsp;&nbsp;
     <strong>{{if .IsBlank}}__________________
@@ -9,7 +9,7 @@
 <h6>Entry Declaration:</h6>
     <ul>
         <li>{{if .HasPillion}}We{{else}}I{{end}} hereby declare that {{if .HasPillion}}we{{else}}I{{end}}  have had
-            the opportunity to read and understand the instructions for the RBLR1000 and have paid particular attention 
+            the opportunity to read and understand the instructions for the {{.EventTitle}} and have paid particular attention 
             to the IBA Archive of Wisdom and agree to be bound by them.
         </li>
         <li>{{if .HasPillion}}We{{else}}I{{end}} further declare that {{if .HasPillion}}we are{{else}}I am{{end}}
@@ -32,7 +32,7 @@
     exposed to a risk of death, becoming permanently disabled or suffering other serious injuries. 
     {{if .HasPillion}}We{{else}}I{{end}} have read the above and acknowledge that {{if .HasPillion}}our{{else}}my{{end}}
     participation in this event is entirely at {{if .HasPillion}}our{{else}}my{{end}} own risk and do not hold any of the
-    organisers, the RBLR or IBA UK liable.  
+    organisers or IBA UK liable.  
 </p>
 <table class="signboxes">
     <tr>
