@@ -5,135 +5,151 @@
  *
  */
 
- body           { 
-    font-family: Arial, Verdana, Geneva, Tahoma, sans-serif;
+body {
+  font-family: Arial, Verdana, Geneva, Tahoma, sans-serif;
 }
 
-section         {
-    display: block;
-    clear: both;
-    width: 185mm;
-    height: 282mm;
-    margin-left: auto;
-    margin-right: auto;
+section {
+  display: block;
+  clear: both;
+  width: 185mm;
+  height: 282mm;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.fpleft         {
-    width: 200px;
-    margin-top: 2em;
-    float: left;
+#imghdr {
+  display: flex;
+  vertical-align: middle;
+  text-align: center;
+  width: 100%;
+  justify-content: space-between;
 }
-.fpright        {
-    width: 300px;
-    margin-top: 5em;
-    float: right;
+.fpleft {
+  width: 150px;
+  height: 150px;
+  margin-top: 2em;
+  text-align: left;
 }
-.newpage        {
-    page-break-before: always;
-    padding-top: 2em;
+.fpright {
+  width: 220px;
+  height: 170px;
+  margin-top: 1em;
+  text-align: right;
 }
-h1              {
-    text-align: center;
-    clear: both;
+.newpage {
+  page-break-before: always;
+  padding-top: 2em;
 }
-
-.hilite              {
-    text-align: justify;
-    background-color: yellow;
-    font-weight: bold;
-
-}
-
-h3              {
-    text-decoration: underline;
-    font-weight: bold;
-    margin-bottom: 0;
+h1,
+h2 {
+  text-align: center;
+  clear: both;
 }
 
-p               {
-    text-align: justify;
+.hilite {
+  text-align: justify;
+  background-color: yellow;
+  font-weight: bold;
+  padding: 2px 5px 2px 5px;
 }
 
-#routelist      {
-
-    width: 150mm;
-    margin-left: auto;
-    margin-right: auto;
-
+h3 {
+  text-decoration: underline;
+  font-weight: bold;
+  margin-bottom: 0;
 }
 
-#routelist td   {
-    padding-bottom: 1em;
+p {
+  text-align: justify;
 }
 
-.routelog       {
-
-    width: 185mm;
-    border-spacing: 0;
-
+#routelist {
+  width: 150mm;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.routelog caption   {
-    font-size: xx-large;
-    font-weight: bold;
-}
-.routelog th    {
-    border-top: solid 1px;
-    border-bottom: solid 1px;
-    border-right: solid 1px;
-    padding: 2px 5px;
-}
-.routelog td    {
-    border-right: solid 1px;
-    border-bottom: solid 1px;
-    padding: 2px 5px;
+#routelist td {
+  padding-bottom: 3px;
 }
 
+.w3w {
+  color: blue;
+  margin-left: 1em;
+}
+.routelog {
+  width: 185mm;
+  border-spacing: 0;
+}
+
+.routelog caption {
+  font-size: large;
+  font-weight: bold;
+}
+.routelog th {
+  border-top: solid 1px;
+  border-bottom: solid 1px;
+  border-right: solid 1px;
+  padding: 2px 5px;
+}
+.routelog td {
+  border-right: solid 1px;
+  border-bottom: solid 1px;
+  padding: 2px 5px;
+}
 
 .routelog .order {
-    width: 5em;
-    border-left: solid 1px;
-    font-weight: bold;
-    text-align: center;
+  width: 5em;
+  border-left: solid 1px;
+  font-weight: bold;
+  text-align: center;
 }
 
-.routelog .name     {
-    width: 12em;
+.routelog .name {
+  border-left: solid 1px;
+  width: 12em;
 }
 .routelog .coords {
-    width: 7em;
+  width: 7em;
 }
 
-.routemap    {
-    display: 
-    block;
-    margin-left: auto;
-    margin-right: auto;
-    height: 550px;
-    width: 185mm;
+.routemap {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 1em;
+  height: 550px;
+  width: 185mm;
 }
 
+.email {
+  color: blue;
+}
 footer {
-    display: block;
-    bottom: 0; 
-    padding-bottom: 0em;
-    border-top: solid 1px;
-    width: 185mm;
-    margin-left: auto;
-    margin-right: auto;
+  display: block;
+  bottom: 0;
+  padding-bottom: 0em;
+  border-top: solid 1px;
+  width: 185mm;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .rightside {
-    float: right;
+  float: right;
 }
 
 @media print {
-	@page {
-        size: A4 portrait; 
-        margin-top: 0;
-        margin-left: 2em;
-        margin-right: 2em;
-        margin-bottom: 0;
-    }
-	html, body {height: 100%;  }
+  @page {
+    size: A4 portrait;
+    margin-top: 0;
+    margin-left: 2em;
+    margin-right: 2em;
+    margin-bottom: 0;
+  }
+  html,
+  body {
+    height: 100%;
+  }
 }
