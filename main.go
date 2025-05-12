@@ -15,25 +15,32 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-const apptitle = "RBLRDOX v1.1"
+const apptitle = "RBLRDOX v1.2"
 const progdesc = `
 I print disclaimers (-doc legal), receipt logs (-doc rlogs) and ride certificates (-doc certs)
-for the RBLR1000 event using entrant details held in a ScoreMaster database.
-The routes (class) are:- A-NC [2], B-NAC [1], C-SC [4], D-SAC [3], E-5C [6], F-5AC [7].
->24hr certs use class = A-NAC [8], B-NC [9], C-SAC [10], D-SC [11].
+for the RBLR1000 event using entrant details held in a ScoreMaster or Alys database.
+The routes [class] are:- A-NCW [2], B-NAC [1], C-SCW [4], D-SAC [3], E-5CW [6], F-5AC [7].
+>24hr certs use class = [8], [9], [10], [11].
 `
+const AlysDBVersion = 20 // Database is compatible with Alys format
+const LateFinisher = 10  // EntrantStatus value indicating a late finisher
 
-var db = flag.String("db", `\sm-installs\rblr23\sm\ScoreMaster.db`, "use this database")
+var db = flag.String("db", ``, "use this database")
 
 var a5 = flag.Bool("a5", false, "Print two per A4 portrait page")
 var doc = flag.String("doc", "rlogs", "The name of the document to be produced")
 var solo = flag.Bool("solo", false, "Blank forms, rider only")
 var class = flag.String("class", "", "The class numbers to be selected. Default=all")
+var route = flag.String("route", "", "The route code to be selected. Default=all (Alys only)")
 var blanks = flag.Int("blanks", 0, "Print <n> blanks only")
+var reprint = flag.Bool("reprint", false, "Print only certs already delivered (Alys only)")
 var entrant = flag.String("entrant", "", "The entrant numbers to be selected. Default=all")
 var rambling = flag.Bool("v", false, "Show debug info")
 var showusage = flag.Bool("?", false, "Show this help")
 var outputfile = flag.String("to", "output.html", "Output filename")
+
+var RouteClass = map[string]int{"A-NCW": 2, "B-NAC": 1, "C-SCW": 4, "D-SAC": 3, "E-5CW": 6, "F-SAC": 7}
+var LateClass = map[string]int{"A-NCW": 8, "B-NAC": 9, "C-SCW": 10, "D-SAC": 11, "E-5CW": 6, "F-SAC": 7}
 
 var DBH *sql.DB
 var OUTF *os.File
@@ -71,6 +78,8 @@ type Entrant struct {
 	PageAfter    bool
 }
 
+var IsAlysDB bool
+
 func newEntrant() *Entrant {
 
 	var e Entrant
@@ -101,7 +110,7 @@ func init() {
 		flag.PrintDefaults()
 	}
 	flag.Parse()
-	if *showusage {
+	if *showusage || *db == "" {
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -150,7 +159,7 @@ func formattedDateRange(daterange string) string {
 
 func main() {
 
-	fmt.Printf("%v\nCopyright (c) 2023 Bob Stammers\n", apptitle)
+	fmt.Printf("%v\nCopyright (c) 2025 Bob Stammers\n", apptitle)
 	fmt.Printf("%v\n", progdesc)
 	OUTF, _ = os.Create(*outputfile)
 	defer OUTF.Close()
@@ -161,19 +170,22 @@ func main() {
 	}
 	defer DBH.Close()
 
-	sqlx := "SELECT rallyparams.StartTime || ';' || rallyparams.FinishTime AS DateRallyRange,RallyTitle FROM rallyparams"
+	sqlx := "SELECT rallyparams.StartTime || ';' || rallyparams.FinishTime AS DateRallyRange,RallyTitle,DBVersion FROM rallyparams"
 
 	rows, err := DBH.Query(sqlx)
 	if err != nil {
 		panic(err)
 	}
+	var dbversion int
+
 	if rows.Next() {
 		var daterange string
-		rows.Scan(&daterange, &CFG.EventTitle)
+		rows.Scan(&daterange, &CFG.EventTitle, &dbversion)
 		CFG.EventDate = formattedDateRange(daterange)
+		IsAlysDB = dbversion >= AlysDBVersion
 	}
 	rows.Close()
-	fmt.Printf("Using database %v  Use -db to override\n", *db)
+	fmt.Printf("Using database %v  (v%v) Use -db to override\n", *db, dbversion)
 	fmt.Printf("Event date: %v\nGenerating %v into %v  Use -doc, -to to override\n", CFG.EventDate, *doc, *outputfile)
 	xfile := filepath.Join(*doc, "header.html")
 	if !fileExists(xfile) {
@@ -181,28 +193,11 @@ func main() {
 		return
 	}
 	emitTopTail(OUTF, xfile)
-	sqlx = "SELECT EntrantID,ifnull(Bike,''),ifnull(BikeReg,''),ifnull(RiderName,'') as RiderName,ifnull(RiderFirst,'')"
-	sqlx += ",ifnull(RiderIBA,0),ifnull(PillionName,''),ifnull(PillionFirst,''),ifnull(PillionIBA,0)"
-	sqlx += ",OdoKms,Class,ifnull(Phone,''),ifnull(Email,''),ifnull(NokName,''),ifnull(NokRelation,''),ifnull(NokPhone,'') "
-	sqlx += ",substr(RiderName,RiderPos+1) As RiderLast"
-	sqlx += " FROM (SELECT *,instr(RiderName,' ') As RiderPos FROM entrants) "
-	if *class != "" || *entrant != "" || *blanks > 0 {
-		sqlx += " WHERE "
-		if *blanks > 0 {
-			sqlx += "EntrantID < 0 AND Class < 0" // So none will be found
-		} else {
-			if *class != "" {
-				sqlx += "Class In (" + *class + ")"
-				if *entrant != "" {
-					sqlx += " OR " // Yes, or not and
-				}
-			}
-			if *entrant != "" {
-				sqlx += "EntrantID In (" + *entrant + ")"
-			}
-		}
+	if IsAlysDB {
+		sqlx = NewschoolSQL()
+	} else {
+		sqlx = OldschoolSQL()
 	}
-	sqlx += " ORDER BY RiderLast, RiderName" // Surname
 	if *rambling {
 		fmt.Printf("%v\n", sqlx)
 	}
@@ -213,15 +208,35 @@ func main() {
 	NRex := 0
 	for rows.Next() {
 		e := newEntrant()
+		var err error
+		var route string
+		var es int
+		var oc string
 		e.IsBlank = false
-		err := rows.Scan(&e.EntrantID, &e.Bike, &e.BikeReg, &e.RiderName, &e.RiderFirst, &e.RiderIBA,
-			&e.PillionName, &e.PillionFirst, &e.PillionIBA,
-			&e.OdoKms, &e.Class, &e.Phone, &e.Email, &e.NokName, &e.NokRelation, &e.NokPhone, &e.RiderLast)
+		if IsAlysDB {
+			err = rows.Scan(&e.EntrantID, &e.Bike, &e.BikeReg, &e.RiderName, &e.RiderFirst, &e.RiderIBA,
+				&e.PillionName, &e.PillionFirst, &e.PillionIBA,
+				&oc, &route, &e.Phone, &e.Email, &e.NokName, &e.NokRelation, &e.NokPhone, &e.RiderLast, &es)
+			if oc == "K" {
+				e.OdoKms = 1
+			} else {
+				e.OdoKms = 0
+			}
+			if es == LateFinisher {
+				e.Class = LateClass[route]
+			} else {
+				e.Class = RouteClass[route]
+			}
+		} else {
+			err = rows.Scan(&e.EntrantID, &e.Bike, &e.BikeReg, &e.RiderName, &e.RiderFirst, &e.RiderIBA,
+				&e.PillionName, &e.PillionFirst, &e.PillionIBA,
+				&e.OdoKms, &e.Class, &e.Phone, &e.Email, &e.NokName, &e.NokRelation, &e.NokPhone, &e.RiderLast, &es)
+		}
 		if err != nil {
 			fmt.Printf("%v\n", err)
 		}
 
-		e.HasPillion = e.PillionName != ""
+		e.HasPillion = strings.TrimSpace(e.PillionName) != ""
 		e.ABike = formattedABike(e.Bike)
 		if *a5 {
 			e.PageAfter = NRex%2 != 0
@@ -273,6 +288,72 @@ func emitTopTail(F *os.File, xfile string) {
 		}
 		F.WriteString(string(html))
 	*/
+}
+
+func NewschoolSQL() string {
+	sqlx := "SELECT EntrantID,ifnull(Bike,''),ifnull(BikeReg,''),ifnull(RiderFirst,'') || ' ' || ifnull(RiderLast,'') as RiderName,ifnull(RiderFirst,'')"
+	sqlx += ",ifnull(RiderIBA,0),ifnull(PillionFirst,'') || ' ' || ifnull(PillionLast,'') as PillionName,ifnull(PillionFirst,''),ifnull(PillionIBA,0)"
+	sqlx += ",OdoCounts,Route,ifnull(RiderPhone,''),ifnull(RiderEmail,''),ifnull(NokName,''),ifnull(NokRelation,''),ifnull(NokPhone,'') "
+	sqlx += ",ifnull(RiderLast,'') As RiderLast,EntrantStatus"
+	sqlx += " FROM entrants "
+	if *doc == "certs" || *route != "" || *entrant != "" {
+		sqlx += " WHERE "
+		if *blanks > 0 {
+			sqlx += "EntrantID < 0" // So none will be found
+		} else {
+			if *doc == "certs" {
+				if *reprint {
+					sqlx += "CertificateDelivered='Y'"
+					if *entrant != "" {
+						sqlx += " AND "
+					}
+				}
+				if !*reprint {
+					sqlx += "CertificateDelivered='N'"
+					if *entrant != "" {
+						sqlx += " AND "
+					}
+				}
+			}
+			if *route != "" {
+				sqlx += "Route ='" + *route + "'"
+				if *entrant != "" {
+					sqlx += " OR " // Yes, or not and
+				}
+			}
+			if *entrant != "" {
+				sqlx += "EntrantID In (" + *entrant + ")"
+			}
+		}
+	}
+	sqlx += " ORDER BY RiderLast, RiderFirst" // Surname
+	return sqlx
+}
+
+func OldschoolSQL() string {
+	sqlx := "SELECT EntrantID,ifnull(Bike,''),ifnull(BikeReg,''),ifnull(RiderName,'') as RiderName,ifnull(RiderFirst,'')"
+	sqlx += ",ifnull(RiderIBA,0),ifnull(PillionName,''),ifnull(PillionFirst,''),ifnull(PillionIBA,0)"
+	sqlx += ",OdoKms,Class,ifnull(Phone,''),ifnull(Email,''),ifnull(NokName,''),ifnull(NokRelation,''),ifnull(NokPhone,'') "
+	sqlx += ",substr(RiderName,RiderPos+1) As RiderLast,EntrantStatus"
+	sqlx += " FROM (SELECT *,instr(RiderName,' ') As RiderPos FROM entrants) "
+	if *class != "" || *entrant != "" || *blanks > 0 {
+		sqlx += " WHERE "
+		if *blanks > 0 {
+			sqlx += "EntrantID < 0 AND Class < 0" // So none will be found
+		} else {
+			if *class != "" {
+				sqlx += "Class In (" + *class + ")"
+				if *entrant != "" {
+					sqlx += " OR " // Yes, or not and
+				}
+			}
+			if *entrant != "" {
+				sqlx += "EntrantID In (" + *entrant + ")"
+			}
+		}
+	}
+	sqlx += " ORDER BY RiderLast, RiderName" // Surname
+	return sqlx
 }
 
 func printBlanks() {
