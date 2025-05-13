@@ -24,6 +24,7 @@ The routes [class] are:- A-NCW [2], B-NAC [1], C-SCW [4], D-SAC [3], E-5CW [6], 
 `
 const AlysDBVersion = 20 // Database is compatible with Alys format
 const LateFinisher = 10  // EntrantStatus value indicating a late finisher
+const Finisher = 8
 
 var db = flag.String("db", ``, "use this database")
 
@@ -37,6 +38,7 @@ var reprint = flag.Bool("reprint", false, "Print only certs already delivered (A
 var entrant = flag.String("entrant", "", "The entrant numbers to be selected. Default=all")
 var rambling = flag.Bool("v", false, "Show debug info")
 var showusage = flag.Bool("?", false, "Show this help")
+var finishers = flag.Bool("final", false, "Print only Finisher certificates")
 var outputfile = flag.String("to", "output.html", "Output filename")
 
 var RouteClass = map[string]int{"A-NCW": 2, "B-NAC": 1, "C-SCW": 4, "D-SAC": 3, "E-5CW": 6, "F-SAC": 7}
@@ -53,29 +55,30 @@ var CFG struct {
 }
 
 type Entrant struct {
-	EntrantID    int
-	ABike        string
-	Bike         string
-	BikeReg      string
-	RiderName    string
-	RiderFirst   string
-	RiderIBA     string
-	PillionName  string
-	PillionFirst string
-	PillionIBA   string
-	OdoKms       int
-	Class        int
-	Phone        string
-	Email        string
-	NokName      string
-	NokRelation  string
-	NokPhone     string
-	RiderLast    string
-	HasPillion   bool
-	IsBlank      bool
-	EventDate    string
-	EventTitle   string
-	PageAfter    bool
+	EntrantID     int
+	ABike         string
+	Bike          string
+	BikeReg       string
+	RiderName     string
+	RiderFirst    string
+	RiderIBA      string
+	PillionName   string
+	PillionFirst  string
+	PillionIBA    string
+	OdoKms        int
+	Class         int
+	Phone         string
+	Email         string
+	NokName       string
+	NokRelation   string
+	NokPhone      string
+	RiderLast     string
+	HasPillion    bool
+	IsBlank       bool
+	EventDate     string
+	EventTitle    string
+	PageAfter     bool
+	EntrantStatus int
 }
 
 var IsAlysDB bool
@@ -210,19 +213,18 @@ func main() {
 		e := newEntrant()
 		var err error
 		var route string
-		var es int
 		var oc string
 		e.IsBlank = false
 		if IsAlysDB {
 			err = rows.Scan(&e.EntrantID, &e.Bike, &e.BikeReg, &e.RiderName, &e.RiderFirst, &e.RiderIBA,
 				&e.PillionName, &e.PillionFirst, &e.PillionIBA,
-				&oc, &route, &e.Phone, &e.Email, &e.NokName, &e.NokRelation, &e.NokPhone, &e.RiderLast, &es)
+				&oc, &route, &e.Phone, &e.Email, &e.NokName, &e.NokRelation, &e.NokPhone, &e.RiderLast, &e.EntrantStatus)
 			if oc == "K" {
 				e.OdoKms = 1
 			} else {
 				e.OdoKms = 0
 			}
-			if es == LateFinisher {
+			if e.EntrantStatus == LateFinisher {
 				e.Class = LateClass[route]
 			} else {
 				e.Class = RouteClass[route]
@@ -230,7 +232,7 @@ func main() {
 		} else {
 			err = rows.Scan(&e.EntrantID, &e.Bike, &e.BikeReg, &e.RiderName, &e.RiderFirst, &e.RiderIBA,
 				&e.PillionName, &e.PillionFirst, &e.PillionIBA,
-				&e.OdoKms, &e.Class, &e.Phone, &e.Email, &e.NokName, &e.NokRelation, &e.NokPhone, &e.RiderLast, &es)
+				&e.OdoKms, &e.Class, &e.Phone, &e.Email, &e.NokName, &e.NokRelation, &e.NokPhone, &e.RiderLast, &e.EntrantStatus)
 		}
 		if err != nil {
 			fmt.Printf("%v\n", err)
@@ -304,12 +306,18 @@ func NewschoolSQL() string {
 			if *doc == "certs" {
 				if *reprint {
 					sqlx += "CertificateDelivered='Y'"
-					if *entrant != "" {
+					if *entrant != "" || *finishers {
 						sqlx += " AND "
 					}
 				}
 				if !*reprint {
 					sqlx += "CertificateDelivered='N'"
+					if *entrant != "" || *finishers {
+						sqlx += " AND "
+					}
+				}
+				if *finishers {
+					sqlx += fmt.Sprintf(" EntrantStatus In (%v,%v)  ", LateFinisher, Finisher)
 					if *entrant != "" {
 						sqlx += " AND "
 					}

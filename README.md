@@ -13,7 +13,7 @@ ordinary html to be included at the start and end of the output file. Each entra
 either entrant.html or entrant*n*.html where *n* is the Class of the entrant.
 
 ## Certificates
-Certificates for the RBLR1000 are always printed using this utility. Certificates for other rallies are printed directly from ScoreMaster.
+Certificates for the RBLR1000 are always printed using this utility. Certificates for other rallies are printed directly from ScoreMaster. This will also print the post-event certificates for people who switched North/South routes or finished after 24 hours. Use **-final** to print those.
 
 ## Receipt logs
 Customised receipt logs are printed for each rider including the essential receipt points on the various designated routes.
