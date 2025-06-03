@@ -33,6 +33,7 @@ var doc = flag.String("doc", "rlogs", "The name of the document to be produced")
 var solo = flag.Bool("solo", false, "Blank forms, rider only")
 var class = flag.String("class", "", "The class numbers to be selected. Default=all")
 var route = flag.String("route", "", "The route code to be selected. Default=all (Alys only)")
+var since = flag.String("since", "", "Select only entries with EntrantdID >= n")
 var blanks = flag.Int("blanks", 0, "Print <n> blanks only")
 var reprint = flag.Bool("reprint", false, "Print only certs already delivered (Alys only)")
 var entrant = flag.String("entrant", "", "The entrant numbers to be selected. Default=all")
@@ -300,7 +301,7 @@ func NewschoolSQL() string {
 	sqlx += ",OdoCounts,Route,ifnull(RiderPhone,''),ifnull(RiderEmail,''),ifnull(NokName,''),ifnull(NokRelation,''),ifnull(NokPhone,'') "
 	sqlx += ",ifnull(RiderLast,'') As RiderLast,EntrantStatus"
 	sqlx += " FROM entrants "
-	if *doc == "certs" || *route != "" || *entrant != "" {
+	if *doc == "certs" || *route != "" || *entrant != "" || *since != "" {
 		sqlx += " WHERE "
 		if *blanks > 0 {
 			sqlx += "EntrantID < 0" // So none will be found
@@ -308,23 +309,29 @@ func NewschoolSQL() string {
 			if *doc == "certs" {
 				if *reprint {
 					sqlx += "CertificateDelivered='Y'"
-					if *entrant != "" || *finishers {
+					if *entrant != "" || *finishers || *since != "" {
 						sqlx += " AND "
 					}
 				}
 				if !*reprint {
 					sqlx += "CertificateDelivered='N'"
-					if *entrant != "" || *finishers {
+					if *entrant != "" || *finishers || *since != "" {
 						sqlx += " AND "
 					}
 				}
 				if *finishers {
 					sqlx += fmt.Sprintf(" EntrantStatus In (%v,%v)  ", LateFinisher, Finisher)
-					if *entrant != "" {
+					if *entrant != "" || *since != "" {
 						sqlx += " AND "
 					}
 				}
+
 			}
+			if *since != "" {
+				sqlx += fmt.Sprintf(" EntrantID >= %v", *since)
+
+			}
+
 			if *route != "" {
 				sqlx += "Route ='" + *route + "'"
 				if *entrant != "" {
