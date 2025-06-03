@@ -41,8 +41,8 @@ var showusage = flag.Bool("?", false, "Show this help")
 var finishers = flag.Bool("final", false, "Print only Finisher certificates")
 var outputfile = flag.String("to", "output.html", "Output filename")
 
-var RouteClass = map[string]int{"A-NCW": 2, "B-NAC": 1, "C-SCW": 4, "D-SAC": 3, "E-5CW": 6, "F-SAC": 7}
-var LateClass = map[string]int{"A-NCW": 8, "B-NAC": 9, "C-SCW": 10, "D-SAC": 11, "E-5CW": 6, "F-SAC": 7}
+var RouteClass = map[string]int{"A-NCW": 2, "B-NAC": 1, "C-SCW": 4, "D-SAC": 3, "E-5CW": 6, "F-5AC": 7}
+var LateClass = map[string]int{"A-NCW": 8, "B-NAC": 9, "C-SCW": 10, "D-SAC": 11, "E-5CW": 6, "F-5AC": 7}
 
 var DBH *sql.DB
 var OUTF *os.File
@@ -209,61 +209,63 @@ func main() {
 		panic(err)
 	}
 	NRex := 0
-	for rows.Next() {
-		e := newEntrant()
-		var err error
-		var route string
-		var oc string
-		e.IsBlank = false
-		if IsAlysDB {
-			err = rows.Scan(&e.EntrantID, &e.Bike, &e.BikeReg, &e.RiderName, &e.RiderFirst, &e.RiderIBA,
-				&e.PillionName, &e.PillionFirst, &e.PillionIBA,
-				&oc, &route, &e.Phone, &e.Email, &e.NokName, &e.NokRelation, &e.NokPhone, &e.RiderLast, &e.EntrantStatus)
-			if oc == "K" {
-				e.OdoKms = 1
-			} else {
-				e.OdoKms = 0
-			}
-			if e.EntrantStatus == LateFinisher {
-				e.Class = LateClass[route]
-			} else {
-				e.Class = RouteClass[route]
-			}
-		} else {
-			err = rows.Scan(&e.EntrantID, &e.Bike, &e.BikeReg, &e.RiderName, &e.RiderFirst, &e.RiderIBA,
-				&e.PillionName, &e.PillionFirst, &e.PillionIBA,
-				&e.OdoKms, &e.Class, &e.Phone, &e.Email, &e.NokName, &e.NokRelation, &e.NokPhone, &e.RiderLast, &e.EntrantStatus)
-		}
-		if err != nil {
-			fmt.Printf("%v\n", err)
-		}
-
-		e.HasPillion = strings.TrimSpace(e.PillionName) != ""
-		e.ABike = formattedABike(e.Bike)
-		if *a5 {
-			e.PageAfter = NRex%2 != 0
-		}
-		xfile = filepath.Join(*doc, "entrant"+strconv.Itoa(e.Class)+".html")
-		if !fileExists(xfile) {
-			xfile = filepath.Join(*doc, "entrant.html")
-		}
-		if !fileExists(xfile) {
-			fmt.Printf("Skipping Entrant %v %v; Class=%v\n", e.EntrantID, e.RiderName, e.Class)
-			continue
-		}
-		t, err := template.ParseFiles(xfile)
-		if err != nil {
-			fmt.Printf("new %v\n", err)
-		}
-		err = t.Execute(OUTF, e)
-		if err != nil {
-			fmt.Printf("x %v\n", err)
-		}
-		NRex++
-	}
-	fmt.Printf("%v populated forms generated\n", NRex)
 	if *blanks > 0 {
 		printBlanks()
+	} else {
+
+		for rows.Next() {
+			e := newEntrant()
+			var err error
+			var route string
+			var oc string
+			e.IsBlank = false
+			if IsAlysDB {
+				err = rows.Scan(&e.EntrantID, &e.Bike, &e.BikeReg, &e.RiderName, &e.RiderFirst, &e.RiderIBA,
+					&e.PillionName, &e.PillionFirst, &e.PillionIBA,
+					&oc, &route, &e.Phone, &e.Email, &e.NokName, &e.NokRelation, &e.NokPhone, &e.RiderLast, &e.EntrantStatus)
+				if oc == "K" {
+					e.OdoKms = 1
+				} else {
+					e.OdoKms = 0
+				}
+				if e.EntrantStatus == LateFinisher {
+					e.Class = LateClass[route]
+				} else {
+					e.Class = RouteClass[route]
+				}
+			} else {
+				err = rows.Scan(&e.EntrantID, &e.Bike, &e.BikeReg, &e.RiderName, &e.RiderFirst, &e.RiderIBA,
+					&e.PillionName, &e.PillionFirst, &e.PillionIBA,
+					&e.OdoKms, &e.Class, &e.Phone, &e.Email, &e.NokName, &e.NokRelation, &e.NokPhone, &e.RiderLast, &e.EntrantStatus)
+			}
+			if err != nil {
+				fmt.Printf("%v\n", err)
+			}
+
+			e.HasPillion = strings.TrimSpace(e.PillionName) != ""
+			e.ABike = formattedABike(e.Bike)
+			if *a5 {
+				e.PageAfter = NRex%2 != 0
+			}
+			xfile = filepath.Join(*doc, "entrant"+strconv.Itoa(e.Class)+".html")
+			if !fileExists(xfile) {
+				xfile = filepath.Join(*doc, "entrant.html")
+			}
+			if !fileExists(xfile) {
+				fmt.Printf("Skipping Entrant %v %v; Class=%v\n", e.EntrantID, e.RiderName, e.Class)
+				continue
+			}
+			t, err := template.ParseFiles(xfile)
+			if err != nil {
+				fmt.Printf("new %v\n", err)
+			}
+			err = t.Execute(OUTF, e)
+			if err != nil {
+				fmt.Printf("x %v\n", err)
+			}
+			NRex++
+		}
+		fmt.Printf("%v populated forms generated\n", NRex)
 	}
 	xfile = filepath.Join(*doc, "footer.html")
 	emitTopTail(OUTF, xfile)
@@ -366,7 +368,27 @@ func OldschoolSQL() string {
 
 func printBlanks() {
 
-	classes := strings.Split(*class, ",")
+	// Assume we're going to print each of the routes
+	routes := ""
+	if *route != "" {
+		x, ok := RouteClass[strings.ToUpper(*route)]
+		if ok {
+			routes = strconv.Itoa(x)
+		}
+
+	}
+	if routes == "" {
+		for _, cl := range RouteClass {
+			if routes != "" {
+				routes += ","
+			}
+			routes += strconv.Itoa(cl)
+		}
+	}
+	if *class != "" { // if classes were specified, print those
+		routes = *class
+	}
+	classes := strings.Split(routes, ",")
 	NRex := 0
 	for _, c := range classes {
 		for n := 0; n < *blanks; n++ {
