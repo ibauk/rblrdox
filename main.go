@@ -35,11 +35,12 @@ var class = flag.String("class", "", "The class numbers to be selected. Default=
 var route = flag.String("route", "", "The route code to be selected. Default=all (Alys only)")
 var since = flag.String("since", "", "Select only entries with EntrantdID >= n")
 var blanks = flag.Int("blanks", 0, "Print <n> blanks only")
-var reprint = flag.Bool("reprint", false, "Print only certs already delivered (Alys only)")
 var entrant = flag.String("entrant", "", "The entrant numbers to be selected. Default=all")
+var reprints = flag.Bool("reprints", false, "Print certs needing to be reprinted after the event")
 var rambling = flag.Bool("v", false, "Show debug info")
 var showusage = flag.Bool("?", false, "Show this help")
 var finishers = flag.Bool("final", false, "Print only Finisher certificates")
+var duplicate = flag.Bool("duplicate", false, "Print only certs already delivered (Alys only)")
 var outputfile = flag.String("to", "output.html", "Output filename")
 
 var RouteClass = map[string]int{"A-NCW": 2, "B-NAC": 1, "C-SCW": 4, "D-SAC": 3, "E-5CW": 6, "F-5AC": 7}
@@ -264,6 +265,9 @@ func main() {
 			if err != nil {
 				fmt.Printf("x %v\n", err)
 			}
+			if e.HasPillion {
+				t.Execute(OUTF, e)
+			}
 			NRex++
 		}
 		fmt.Printf("%v populated forms generated\n", NRex)
@@ -307,17 +311,24 @@ func NewschoolSQL() string {
 			sqlx += "EntrantID < 0" // So none will be found
 		} else {
 			if *doc == "certs" {
-				if *reprint {
+				if *duplicate {
 					sqlx += "CertificateDelivered='Y'"
 					if *entrant != "" || *finishers || *since != "" {
 						sqlx += " AND "
 					}
 				}
-				if !*reprint {
+				if !*duplicate || *reprints {
 					sqlx += "CertificateDelivered='N'"
+					if *entrant != "" || *finishers || *since != "" || *reprints {
+						sqlx += " AND "
+					}
+				}
+				if *reprints {
+					sqlx += "CertificateAvailable='N'"
 					if *entrant != "" || *finishers || *since != "" {
 						sqlx += " AND "
 					}
+
 				}
 				if *finishers {
 					sqlx += fmt.Sprintf(" EntrantStatus In (%v,%v)  ", LateFinisher, Finisher)
