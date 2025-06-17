@@ -265,7 +265,7 @@ func main() {
 			if err != nil {
 				fmt.Printf("x %v\n", err)
 			}
-			if e.HasPillion {
+			if e.HasPillion && *doc == "certs" {
 				t.Execute(OUTF, e)
 			}
 			NRex++
