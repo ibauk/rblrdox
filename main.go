@@ -152,7 +152,7 @@ func formattedDateRange(daterange string) string {
 	dt1, _ := time.Parse("2006-01-02", dt[0])
 	dt = strings.Split(dts[1], "T")
 	dt2, _ := time.Parse("2006-01-02", dt[0])
-	if dt1 == dt2 {
+	if time.Time.Equal(dt1, dt2) {
 		return formattedDate(dt1)
 	}
 	if dt1.Year() == dt2.Year() && dt1.Month() == dt2.Month() {
